@@ -95,7 +95,6 @@ def from_raw_message(raw_message):
 
 	# parse raw options
 	options = _parse_raw_options(options_raw)
-	print "options parsed: ", options
 	
 	# find message type, delete it from the list ( we don't need to add it twice )
 	for option in options:
@@ -118,7 +117,6 @@ def from_raw_message(raw_message):
 def parse_options(options):
 	packet = ''
 	for option in options:
-		print option
 		code, value = option
 
 		# with single byte value
