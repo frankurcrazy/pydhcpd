@@ -4,15 +4,14 @@
 import struct 
 import socket
 import random
-import string
-import collections
-
+import string 
+import collections 
 
 class dhcp_packet(object):
 	# dhcp message type (option 53)
 	DHCPDISCOVER = 1 
 	DHCPOFFER = 2
-	DHCPREQUEST = 3
+	DHCPREQUEST = 3 
 	DHCPDECLINE = 4
 	DHCPACK = 5 
 	DHCPNACK = 6
@@ -51,8 +50,8 @@ class dhcp_packet(object):
 		flags(2) unicast or broadcast
 		"""
 
-		return struct.pack(self.DHCP_HEADER_FORMAT, \
-				packet_field['op'], \
+		return struct.pack(self.DHCP_HEADER_FORMAT, 
+				packet_field['op'],
 				packet_field['htype'],
 				packet_field['hlen'], 
 				packet_field['hops'], 
@@ -73,8 +72,8 @@ class dhcp_packet(object):
 			['op', 'htype', 'hlen', 'hops', 'xid', 'secs', 'flags', 'ciaddr', 'yiaddr', 'siaddr', 'giaddr', 'chaddr', 'sname', 'file', 'options'])  
 
 		options = []
-		
 		dhcp_header = struct.unpack(self.DHCP_HEADER_FORMAT, dhcp_message[:self.DHCP_HEADER_LENGTH])
+		
 		
 		# Bypass Magic Cookie
 		if dhcp_message[self.DHCP_HEADER_LENGTH:self.DHCP_HEADER_LENGTH+4] == "\x63\x82\x53\x63":
@@ -82,23 +81,20 @@ class dhcp_packet(object):
 		else:
 			options_raw = dhcp_message[self.DHCP_HEADER_LENGTH:]
 
-		print (repr(options_raw[-10:]))
-
 		cur_pos = 0 # option parsing cusor, constantly pointing to next option code
 		while True:
 			op_code = ord(options_raw[cur_pos])
+			value = options_raw[cur_pos+2:cur_pos+2+ord(options_raw[cur_pos+1])]
 			if op_code == 0: # option pad
 				cur_pos += 1
-			#elif op_code == 1: # option router
-			#	options[:-1] = (op_code, options_raw[cur_pos+2:cur_pos+2+(options_raw[cur_pos+1])])
-			#elif op_code == 53: # option message
-			#	options[:-1] = (op_code, options_raw[cur_pos+2:cur_pos+2+(options_raw[cur_pos+1]))
-			#elif op_code == 54: # option server identifier
-			#	options[:-1] = 
 			elif op_code == 255:
 				break;
-			elif op_code in [53]:
-				options[:-1] = [ (op_code, ord(options_raw[cur_pos+2:cur_pos+2+ord(options_raw[cur_pos+1])])) ]
+			elif op_code in [53]: # message type
+				options[:-1] = [ (op_code, ord(value)) ]
+			elif op_code in [51, 58, 59]: # lease/renew/rebind time
+				options[:-1] = [ (op_code, struct.unpack("!I", value)[0]) ]
+			elif op_code in [1, 3, 28, 54]: # subnet mask/router ip/broadcast address/server identifier
+				options[:-1] = [ (op_code, socket.inet_ntoa(value)) ]
 			else:
 				options[:-1] = [(op_code, options_raw[cur_pos+2:cur_pos+2+ord(options_raw[cur_pos+1])])]
 
@@ -106,9 +102,23 @@ class dhcp_packet(object):
 			cur_pos += ord(options_raw[cur_pos+1]) + 2
 			if cur_pos >= len(options_raw)-1: break
 
-		return options
-
-		
+		return DHCPPacket(
+					op=dhcp_header[0],
+					htype=dhcp_header[1],
+					hlen=dhcp_header[2],
+					hops=dhcp_header[3],
+					xid=dhcp_header[4],
+					secs=dhcp_header[5],
+					flags=dhcp_header[6],
+					ciaddr=socket.inet_ntoa(struct.pack("!I",dhcp_header[7])),
+					yiaddr=socket.inet_ntoa(struct.pack("!I",dhcp_header[8])),
+					siaddr=socket.inet_ntoa(struct.pack("!I",dhcp_header[9])),
+					giaddr=socket.inet_ntoa(struct.pack("!I",dhcp_header[10])),
+					chaddr=dhcp_header[11],
+					sname=dhcp_header[12],
+					file=dhcp_header[13],
+					options=options
+				)
 
 	def request(self, ciaddr=None, options=""):
 		packet_field = {
@@ -181,6 +191,5 @@ if __name__ == "__main__":
 	packet_format = "!4B1I2H4I16s64s128s"
 	resp = struct.unpack(packet_format, m[:236])
 	print packet.parseDHCPPacket(m)
-	#print(repr(resp))
 	
 
