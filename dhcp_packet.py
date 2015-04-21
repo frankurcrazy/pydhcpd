@@ -114,7 +114,7 @@ def from_raw_message(raw_message):
 """
 	parse option list into raw packet
 """
-def parse_options(options):
+def _parse_options(options):
 	packet = ''
 	for option in options:
 		code, value = option
@@ -305,7 +305,7 @@ class dhcp_packet(object):
 				)
 
 		packet += MAGIC_COOKIE
-		packet += parse_options(self.options)
+		packet += _parse_options(self.options)
 		packet += chr(__OPTION_END__)
 		return packet
 
