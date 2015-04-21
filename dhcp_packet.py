@@ -95,13 +95,13 @@ def from_raw_message(raw_message):
 
 	# parse raw options
 	options = _parse_raw_options(options_raw)
-	
-	# find message type, delete it from the list ( we don't need to add it twice )
+
 	for option in options:
-		if option[0] == __OPTION_MESSAGE_TYPE__: 
-			message_type = option[1]
-		options.remove(option)
-	
+		if option[0]==__OPTION_MESSAGE_TYPE__:
+			break
+	if not option: raise Exception("No Message Type Specified in Packet")
+	else: message_type = option[1]
+
 	return dhcp_packet(message_type=message_type, htype=dhcp_header[1],
 					hlen=dhcp_header[2], hops=dhcp_header[3],
 					xid=dhcp_header[4], secs=dhcp_header[5], broadcast=True if dhcp_header[6]==1<<15 else False,
@@ -207,6 +207,7 @@ class dhcp_packet(object):
 	def __init__(self, message_type, mac, hlen=6, htype=1, hops=0, secs=0, xid=None, broadcast=True, 
 				ciaddr=None, yiaddr=None, siaddr=None, giaddr=None, sname="", file="", options=[]):
 
+		self.options = []
 		if (message_type == DHCPDISCOVER):
 			self.op = REQUEST
 		elif (message_type == DHCPOFFER):
@@ -226,6 +227,7 @@ class dhcp_packet(object):
 			self.op = REQUEST
 		else:
 			# Unknown message type
+			print message_type
 			raise Exception("Unknown DHCP Message Type")
 
 		# randomize xid if not given
@@ -235,7 +237,16 @@ class dhcp_packet(object):
 
 		# add message type option into packet
 		self.message_type = message_type
-		self.options = [(__OPTION_MESSAGE_TYPE__, message_type)]
+		opt = None
+		for option in options:
+			if option[0] == __OPTION_MESSAGE_TYPE__:
+				opt = option
+				break
+
+		if not opt: # no message type found, create one
+			self.options += [(__OPTION_MESSAGE_TYPE__, message_type)]
+		elif opt[1] != message_type:
+			raise Exception("Duplicate message type")
 
 		# setting dhcp header
 		self.hlen = hlen
