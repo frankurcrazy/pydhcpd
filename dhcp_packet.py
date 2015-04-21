@@ -68,7 +68,7 @@ MESSAGE_TYPE = (
 
 # Misc
 __SUPPORTED_OPTION_CODE__ = [0, 1, 3, 6, 12, 53, 54, 58, 59, 255]
-__DHCP_HEADER_FORMAT__ = "!4B1I2H4I16s64s128s"
+__DHCP_HEADER_FORMAT__ = "!4B1I2H4s4s4s4s16s64s128s"
 DHCP_HEADER_LENGTH = struct.calcsize(__DHCP_HEADER_FORMAT__)
 
 __dhcp_struct__ = struct.Struct(__DHCP_HEADER_FORMAT__)
@@ -105,10 +105,10 @@ def from_raw_message(raw_message):
 	return dhcp_packet(message_type=message_type, htype=dhcp_header[1],
 					hlen=dhcp_header[2], hops=dhcp_header[3],
 					xid=dhcp_header[4], secs=dhcp_header[5], broadcast=True if dhcp_header[6]==1<<15 else False,
-					ciaddr=socket.inet_ntoa(struct.pack("!I", dhcp_header[7])),
-					yiaddr=socket.inet_ntoa(struct.pack("!I", dhcp_header[8])),
-					siaddr=socket.inet_ntoa(struct.pack("!I", dhcp_header[9])),
-					giaddr=socket.inet_ntoa(struct.pack("!I", dhcp_header[10])),
+					ciaddr=socket.inet_ntoa(dhcp_header[7]),
+					yiaddr=socket.inet_ntoa(dhcp_header[8]),
+					siaddr=socket.inet_ntoa(dhcp_header[9]),
+					giaddr=socket.inet_ntoa(dhcp_header[10]),
 					mac=dhcp_header[11][0:6].encode('hex'), sname=dhcp_header[12], file=dhcp_header[13], options=options)
 	
 """
@@ -258,10 +258,10 @@ class dhcp_packet(object):
 		self.file = file
 
 		# translate dotted-notation into native int
-		self.ciaddr = 0 if not ciaddr else struct.unpack("!I", socket.inet_aton(ciaddr))[0]
-		self.yiaddr = 0 if not yiaddr else struct.unpack("!I", socket.inet_aton(yiaddr))[0]
-		self.siaddr = 0 if not siaddr else struct.unpack("!I", socket.inet_aton(siaddr))[0]
-		self.giaddr = 0 if not giaddr else struct.unpack("!I", socket.inet_aton(giaddr))[0]
+		self.ciaddr = "0.0.0.0" if not ciaddr else ciaddr
+		self.yiaddr = "0.0.0.0" if not yiaddr else yiaddr
+		self.siaddr = "0.0.0.0" if not siaddr else siaddr
+		self.giaddr = "0.0.0.0" if not giaddr else giaddr
 
 		# translate mac address into hex digit
 		mac = mac.replace(":", "").replace(".","").decode('hex')
@@ -290,10 +290,10 @@ class dhcp_packet(object):
 			'hlen': self.hlen,
 			'hops': self.hops,
 			'xid': self.xid,
-			'ciaddr': socket.inet_ntoa(struct.pack("!I", self.ciaddr)),
-			'yiaddr': socket.inet_ntoa(struct.pack("!I", self.yiaddr)),
-			'siaddr': socket.inet_ntoa(struct.pack("!I", self.siaddr)),
-			'giaddr': socket.inet_ntoa(struct.pack("!I", self.giaddr)),
+			'ciaddr': self.ciaddr,
+			'yiaddr': self.yiaddr,
+			'siaddr': self.siaddr,
+			'giaddr': self.giaddr,
 			'chaddr': repr(self.chaddr),
 			'sname': self.sname,
 			'file': self.file
@@ -309,7 +309,10 @@ class dhcp_packet(object):
 				self.op, self.htype, self.hlen, self.hops,
 				self.xid,
 				self.secs, self.flags,
-				self.ciaddr, self.yiaddr, self.siaddr, self.giaddr,
+				socket.inet_aton(self.ciaddr),
+				socket.inet_aton(self.yiaddr), 
+				socket.inet_aton(self.siaddr), 
+				socket.inet_aton(self.giaddr),
 				self.chaddr,
 				self.sname,
 				self.file
