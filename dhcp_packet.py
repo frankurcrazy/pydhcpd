@@ -56,6 +56,7 @@ DHCPRELEASE = 7
 DHCPINFORM = 8
 
 MESSAGE_TYPE = (
+	"",
 	"DHCPDISCOVER",
 	"DHCPOFFER",
 	"DHCPREQUEST",
@@ -282,7 +283,7 @@ class dhcp_packet(object):
 		"[file: \"%(file)s\"]\n"
 		) % {
 			'mtype': self.message_type,
-			'typename': MESSAGE_TYPE[self.message_type-1],
+			'typename': MESSAGE_TYPE[self.message_type],
 			'op': self.op,
 			'secs': self.secs,
 			'flags': self.flags,
@@ -325,10 +326,10 @@ class dhcp_packet(object):
 
 	def __repr__(self):
 		return repr(self.to_raw())	
-		
 
-class dhcp_server(object):
-	pass
+	def mac_str(self):
+		return ":".join( x.encode('hex') for x in self.chaddr )
+
 
 class dhcp_client(object):
 	pass
