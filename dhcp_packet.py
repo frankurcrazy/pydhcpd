@@ -86,6 +86,7 @@ __dhcp_struct__ = struct.Struct(__DHCP_HEADER_FORMAT__)
 def from_raw_message(raw_message):
 	message_type = 0
 	options_raw = ''
+	if len(raw_message) < DHCP_HEADER_LENGTH: return None
 	dhcp_header = __dhcp_struct__.unpack(raw_message[:DHCP_HEADER_LENGTH])
 
 	# Bypass Magic Cookie

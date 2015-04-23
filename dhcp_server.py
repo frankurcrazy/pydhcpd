@@ -89,6 +89,7 @@ class dhcp_server(object):
 			for sock in readready:
 				message, address = sock.recvfrom(BUFSIZE)
 				dp = dhcp_packet.from_raw_message(message)	
+				if not dp: continue
 
 				# find existing session
 				self.remove_expired_lease()
