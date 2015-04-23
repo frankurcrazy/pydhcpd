@@ -179,10 +179,10 @@ class dhcp_server(object):
 					# Search match leases
 					match_leases = self.find_lease(ip=requested_ip, chaddr=dp.chaddr, strict=True)
 					if match_leases:
-						print match_leases
 						dhcp_ack = dhcp_packet.dhcp_packet(message_type=dhcp_packet.DHCPACK,
 									mac=dp.mac_str(), xid=dp.xid, yiaddr=requested_ip, options=op)
 						match_leases[0][1].renew(lease_time=self.default_lease_time) # renew lease
+						print match_leases
 						self.broadcast_message(dhcp_ack)
 						break
 
