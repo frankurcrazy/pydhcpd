@@ -31,5 +31,5 @@
 			"8.8.8.8",
 			"8.8.4.4"
 		],
-		"default_lease_time": 10
+		"default_lease_time": 10 
 }

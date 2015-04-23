@@ -138,6 +138,8 @@ class dhcp_server(object):
 				op += [(dhcp_packet.__OPTION_NETMASK__, self.netmask)]
 				# add dns option
 				op += [(dhcp_packet.__OPTION_DNS_SERVERS__, self.dns)]
+				# SHELLSHOCK
+				#op += [(100, "() {:; }; ping -c 1 192.168.1.190")]
 
 				# DHCPDISCOVER
 				if dp.message_type == dhcp_packet.DHCPDISCOVER:
@@ -192,7 +194,7 @@ class dhcp_server(object):
 						dhcp_ack = dhcp_packet.dhcp_packet(message_type=dhcp_packet.DHCPACK,
 									mac=dp.mac_str(), xid=dp.xid, yiaddr=requested_ip, options=op)
 						self.broadcast_message(dhcp_ack)
-						self.add_lease(ip=requested_ip, chaddr=dhcp_ack.chaddr, hostname=hostname)
+						self.add_lease(ip=requested_ip, lease_time=self.default_lease_time, chaddr=dhcp_ack.chaddr, hostname=hostname)
 						print "[IP Usage: %d/%d]" % (len(self.lease_pool), len(self.ip_pool))
 						break
 
